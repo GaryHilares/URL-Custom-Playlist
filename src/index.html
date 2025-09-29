@@ -179,8 +179,12 @@
         iniatializePrevButton();
       };
 
+      const isAutoplayEnabled = () => {
+        return document.getElementById("autoplay-toggle").checked;
+      };
+
       const onStateChange = async (event) => {
-        if (event.data === YT.PlayerState.ENDED) {
+        if (event.data === YT.PlayerState.ENDED && isAutoplayEnabled()) {
           playNewVideo();
         }
       };
