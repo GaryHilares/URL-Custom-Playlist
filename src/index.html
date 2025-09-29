@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>URL Custom Playlist</title>
+    <meta charset="utf-8" />
+    <style>
+      .custom-main-wrapper {
+        width: 90%;
+        margin: 0 24px;
+      }
+
+      #player {
+        width: 240px;
+        height: 195px;
+      }
+
+      @media (min-width: 576px) {
+        #player {
+          width: 480px;
+          height: 293px;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .custom-main-wrapper {
+          width: 75%;
+          margin: 0 auto;
+        }
+
+        #player {
+          width: 640px;
+          height: 390px;
+        }
+      }
+
+      @media (min-width: 1200px) {
+        #player {
+          width: 960px;
+          height: 585px;
+        }
+      }
+    </style>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="custom-main-wrapper text-center">
+      <div class="my-3">
+        <h1>URL custom playlist</h1>
+        <h2 class="text-secondary">
+          Utility made by <a href="https://hilares.net/">Gary Hilares</a>
+        </h2>
+      </div>
+      <div class="my-3">
+        <iframe
+          id="player"
+          src="http://www.youtube.com/embed/M7lc1UVf-VE?enablejsapi=1"
+          width="640"
+          height="390"
+          frameborder="0"
+          allowfullscreen
+        ></iframe>
+      </div>
+      <div class="my-3 mx-auto w-50">
+        <button id="prev-button" class="btn btn-primary">Previous video</button>
+        <button id="new-button" class="btn btn-primary">New video</button>
+        <div class="d-inline-block text-start form-check form-switch mx-3">
+          <input
+            id="autoplay-toggle"
+            class="form-check-input"
+            type="checkbox"
+          />
+          <label for="autoplay-toggle" class="form-check-label"
+            >Enable autoplay</label
+          >
+        </div>
+      </div>
+      <div class="my-3">
+        <input
+          id="url-input"
+          class="w-100 form-control"
+          placeholder="Enter your URL"
+        />
+      </div>
+      <div class="my-3">
+        <span id="text-message"></span>
+      </div>
+    </div>
+    <script>
+      const defaultVideo = "M7lc1UVf-VE";
+      let player = null;
+      let currentVideo = defaultVideo;
+      const previousVideos = [defaultVideo];
+
+      const setSuccessMessage = (message) => {
+        const messageBox = document.getElementById("text-message");
+        messageBox.textContent = message;
+        messageBox.classList.remove("text-error");
+        messageBox.classList.add("text-success");
+      };
+
+      const setErrorMessage = (message) => {
+        const messageBox = document.getElementById("text-message");
+        messageBox.textContent = message;
+        messageBox.classList.remove("text-success");
+        messageBox.classList.add("text-error");
+      };
+
+      const getNewVideo = async () => {
+        const url = document.getElementById("url-input").value;
+        const response = await fetch(url);
+        if (response.ok) {
+          setSuccessMessage("API request returned successfully.");
+          const videoId = await response.text();
+          previousVideos.push(currentVideo);
+          currentVideo = videoId;
+          return videoId;
+        } else {
+          setErrorMessage("API request returned unsuccessfully.");
+          return currentVideo;
+        }
+      };
+
+      const getPreviousVideo = () => {
+        if (previousVideos.length === 0) {
+          setErrorMessage("There is no previous video to play.");
+          return currentVideo;
+        } else {
+          setSuccessMessage("Set previous video.");
+          currentVideo = previousVideos[previousVideos.length - 1];
+          return previousVideos.pop(previousVideos.length - 1);
+        }
+      };
+
+      const loadYoutubeIframeApi = () => {
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName("script")[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      };
+
+      const playNewVideo = async () => {
+        if (player) {
+          const newVideoId = await getNewVideo();
+          player.loadVideoById(newVideoId);
+        }
+      };
+
+      const playPreviousVideo = () => {
+        if (player) {
+          const newVideoId = getPreviousVideo();
+          player.loadVideoById(newVideoId);
+        }
+      };
+
+      const iniatializeNewButton = () => {
+        document
+          .getElementById("new-button")
+          .addEventListener("click", playNewVideo);
+      };
+
+      const iniatializePrevButton = () => {
+        document
+          .getElementById("prev-button")
+          .addEventListener("click", playPreviousVideo);
+      };
+
+      const initializeButtons = () => {
+        iniatializeNewButton();
+        iniatializePrevButton();
+      };
+
+      const onStateChange = async (event) => {
+        if (event.data === YT.PlayerState.ENDED) {
+          playNewVideo();
+        }
+      };
+
+      const initializePlayer = () => {
+        window.onYouTubeIframeAPIReady = () => {
+          player = new YT.Player("player", {
+            height: "390",
+            width: "640",
+            videoId: "M7lc1UVf-VE",
+            playerVars: {
+              playsinline: 1,
+            },
+            events: {
+              onStateChange,
+            },
+          });
+        };
+      };
+
+      const main = () => {
+        loadYoutubeIframeApi();
+        initializePlayer();
+        initializeButtons();
+      };
+
+      main();
+    </script>
+  </body>
+</html>
