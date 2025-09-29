@@ -201,10 +201,19 @@
         };
       };
 
+      const initializeUrl = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const url = urlParams.get("url");
+        if (url) {
+          document.getElementById("url-input").value = url;
+        }
+      };
+
       const main = () => {
         loadYoutubeIframeApi();
         initializePlayer();
         initializeButtons();
+        initializeUrl();
       };
 
       main();
